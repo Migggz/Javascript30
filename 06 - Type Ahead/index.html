@@ -19,6 +19,57 @@
   <script>
     const endpoint ='https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
     
+    let cities = [];
+
+    fetch(endpoint)
+    .then(res => res.json())
+    .then(data => cities.push(...data))
+
+    function findMatches(wordToMatch, cities) {
+      return cities.filter(place => {
+        const regex = new RegExp(wordToMatch, 'gi');
+        return place.city.match(regex) || place.state.match(regex)
+      })
+    }
+
+    
+    function numberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function displayMatches(e) {
+      const value = e.currentTarget.value;
+      if (value.length > 0) { // Handle empty input text, returns it to the first html content 
+        const matchArray = findMatches(value, cities);
+        const html = matchArray.length > 0 ? matchArray.map(place => {
+          const regex = new RegExp(value, 'gi');
+          const city = place.city.replace(regex, `<span class="hl">${value}</span>`)
+          const state = place.state.replace(regex, `<span class="hl">${value}</span>`)
+          return `
+            <li>
+              <span class="name">${city}, ${state}</span>
+              <span class="population">${numberWithCommas(place.population)}</span>
+            </li>
+          `; 
+        }).join("") : `
+          <li>
+            <span class="population">There is no City or State with that name</span>
+          </li>
+        `; // handle not found matches
+
+        suggestions.innerHTML = html;
+      } else {
+        suggestions.innerHTML = suggestionsBaseHtml;
+      }
+    }
+
+    const searchInput = document.querySelector('.search');
+    const suggestions = document.querySelector('.suggestions');
+    const suggestionsBaseHtml = suggestions.innerHTML;
+
+    searchInput.addEventListener('change', displayMatches)
+    searchInput.addEventListener('keyup', displayMatches)
+
   </script>
 </body>
 
